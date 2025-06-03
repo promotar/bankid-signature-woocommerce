@@ -5,6 +5,12 @@ jQuery(document).ready(function ($) {
     const companyApiGuid = bankid_vars.companyApiGuid;
     const apiUrl = bankid_vars.apiUrl;
 
+    // Detect if user is on a mobile device
+    function isMobile() {
+        return /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    }
+
+    // Hide all payment methods if BankID verification is active
     function hidePaymentMethodsIfBankID() {
         if ($('#bankid-verification').length > 0) {
             $('#payment').hide();
@@ -16,6 +22,7 @@ jQuery(document).ready(function ($) {
         hidePaymentMethodsIfBankID();
     });
 
+    // Begin BankID signing process
     $.post(bankid_vars.start_sign_url, {
         apiUser,
         password,
@@ -23,17 +30,26 @@ jQuery(document).ready(function ($) {
     }, function (res) {
         if (res.apiCallResponse && res.apiCallResponse.Response) {
             orderRef = res.apiCallResponse.Response.OrderRef;
-
-            // ✅ define autoToken and redirectUrl
             const autoToken = res.apiCallResponse.Response.AutoStartToken;
-            const redirectUrl = window.location.href;
+            const redirectUrl = "null"; // As per updated BankID docs
 
+            // Build the BankID app launch link depending on device
+            let bankidLink = "";
+            if (isMobile()) {
+                bankidLink = `https://app.bankid.com/?autostarttoken=${autoToken}&redirect=${redirectUrl}`;
+            } else {
+                bankidLink = `bankid:///?autostarttoken=${autoToken}&redirect=${redirectUrl}`;
+            }
+
+            // Refresh the QR code every 5 seconds
             function refreshQR(url) {
                 $('#bankid-qr').attr('src', url + '?' + new Date().getTime());
             }
 
-            // ✅ Add manual redirect button below QR
-            const bankidLink = `https://app.bankid.com/?autostarttoken=${autoToken}&redirect=${encodeURIComponent(redirectUrl)}`;
+            refreshQR(res.apiCallResponse.Response.QrImage);
+            setInterval(() => refreshQR(res.apiCallResponse.Response.QrImage), 5000);
+
+            // Show the manual launch button
             $('#bankid-verification').append(`
                 <p style="margin-top: 10px;">
                     <a href="${bankidLink}" id="bankid-redirect-btn" class="button" style="display:inline-block;padding:10px 20px;background:#0073aa;color:#fff;text-decoration:none;border-radius:4px;">
@@ -42,11 +58,7 @@ jQuery(document).ready(function ($) {
                 </p>
             `);
 
-            // ✅ Refresh QR every 5 seconds
-            refreshQR(res.apiCallResponse.Response.QrImage);
-            setInterval(() => refreshQR(res.apiCallResponse.Response.QrImage), 5000);
-
-            // ✅ Check signing status
+            // Start polling the BankID API to check signing status
             let interval = setInterval(() => {
                 $.post(bankid_vars.check_status_url, {
                     apiUser,
@@ -70,6 +82,7 @@ jQuery(document).ready(function ($) {
         }
     }).fail(function (jqXHR, textStatus, errorThrown) {
         let errorMsg = '❌ Network/API error while connecting to BankID.';
+
         if (jqXHR.responseText) {
             errorMsg += ` Server says: ${jqXHR.responseText}`;
         } else if (errorThrown) {
@@ -77,6 +90,7 @@ jQuery(document).ready(function ($) {
         } else {
             errorMsg += ` (Status: ${jqXHR.status} - ${textStatus})`;
         }
+
         $('#bankid-status').css('color', 'red').text(errorMsg);
     });
 });
