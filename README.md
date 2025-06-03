@@ -1,50 +1,70 @@
-🔐 Plugin Overview: BankID Signature for WooCommerce
-Plugin Name: BankID Signature for WooCommerce
-Version: 2.8
-Developer: Ziad Mansor
-Website: https://jo-promoter.com
-Company: Layar1
-Company Website: https://layar1.com
-Region of Operation: Jordan – MENA
+# 🔐 BankID Signature for WooCommerce
 
-🔎 What Does This Plugin Do?
-This plugin provides seamless digital signature integration via BankID for WooCommerce-based stores. It enables merchants to enforce secure customer authentication and order confirmation using the official Swedish BankID app during the checkout process.
+**Version:** 2.8  
+**Author:** [Ziad Mansor](https://jo-promoter.com)  
+**Company:** [Layar1](https://layar1.com)  
+**Region:** Jordan – MENA  
 
-It’s specifically designed for scenarios where user verification is required before redirecting them to an external purchase, such as affiliate, telecom, legal, or financial services.
+## 📝 Description
 
-⚙️ How It Works
-Adds a custom option in the product settings to activate BankID signature requirement per product.
+BankID Signature for WooCommerce is a powerful plugin that enables **secure digital signing** of WooCommerce orders via the Swedish **BankID** system.
 
-If enabled, the customer is prompted at checkout to sign the order via the BankID app.
+It is ideal for telecom, financial, legal, or affiliate services that require **identity verification and user consent** before redirecting users to external URLs or completing sensitive orders.
 
-A QR code is displayed (desktop) or the app is auto-launched (mobile).
+---
 
-The plugin monitors signature status via BankID’s collectstatus API.
+## ⚙️ How It Works
 
-Once signed, the order is automatically processed and the user is redirected to a defined URL.
+- Adds a **"BankID Sign" checkbox** to every product edit page.
+- If enabled, a **custom redirect URL field** appears (e.g., external purchase page).
+- At checkout, if such a product is in cart:
+  - The **BankID QR code** is displayed (for desktop), or
+  - The **BankID app** is launched (on mobile).
+- The plugin polls BankID every 5 seconds to check signing status.
+- When signed successfully:
+  - The order status becomes `processing`
+  - A note is added: `BankID signed`
+  - The customer is redirected to the provided URL.
+- If signature fails or is cancelled:
+  - An error message is shown to the user.
 
-Payment methods are hidden and replaced by the BankID process to avoid any conflicts.
+---
 
-🧠 Key Features
-✅ Supports all WooCommerce product types (simple, variable, affiliate…)
-✅ Adds BankID sign option to each product (via checkbox)
-✅ Accepts custom redirect URL after successful signature
-✅ Dynamically shows QR Code or launches BankID app based on device
-✅ Fully compliant with BankID signing workflow and security
-✅ Stores a note in the order: BankID signed
-✅ Removes traditional payment methods during the process
-✅ Handles signature errors and timeouts gracefully
-✅ Customizable from plugin settings page (API keys & endpoints)
+## 🧠 Features
 
-🧑‍💼 About the Developer
-Ziad Mansor is a full-stack web developer specialized in advanced Laravel and WordPress/WooCommerce systems. He is the technical lead at Layar1, a digital innovation company based in Jordan that offers web hosting, crypto platforms, telecom systems, and secure web applications.
+✅ Supports **all WooCommerce product types**  
+✅ Adds **BankID sign requirement** per product  
+✅ Custom **redirect URL** after signing  
+✅ Automatically detects device type (mobile vs desktop)  
+✅ Hides WooCommerce payment methods during BankID flow  
+✅ Full status monitoring via BankID `collectstatus` API  
+✅ Admin settings page to manage **API keys and endpoint URLs**  
+✅ Fully **localized and extensible**
 
-🛡️ Ideal Use Cases
-Telecom companies requiring secure identity confirmation
+---
 
-Affiliate marketing products that need signature verification
+## 🏢 About Layar1 & Developer
 
-Legal or insurance services offering digital contract approval
+**Ziad Mansor** is a full-stack developer specialized in Laravel and WordPress ecosystems.  
+He leads development at [**Layar1**](https://layar1.com), a company offering:
 
-Any WooCommerce store requiring verified purchases before redirection
+- Advanced hosting & SaaS platforms  
+- Blockchain and crypto-based apps  
+- Telecom & digital signature integrations  
+- WooCommerce & API-based automation systems  
 
+---
+
+## 📦 Installation
+
+1. Upload the plugin `.zip` via WordPress Admin > Plugins > Add New.
+2. Activate the plugin.
+3. Go to **WooCommerce > Settings > BankID** tab to enter your API credentials.
+4. Edit any product and enable **BankID Sign** + define a **Redirect URL**.
+5. Done! ✅
+
+---
+
+## 📄 License
+
+MIT – Free to use and extend with attribution.
