@@ -1,5 +1,3 @@
-# bankid-signature-woocommerce
-start the BankID app
 🔐 Plugin Overview: BankID Signature for WooCommerce
 Plugin Name: BankID Signature for WooCommerce
 Version: 2.8
