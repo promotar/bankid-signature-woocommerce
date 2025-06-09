@@ -1,0 +1,54 @@
+#bankid-signature-modal {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    background: rgba(0,0,0,0.35);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+#bankid-signature-modal > div {
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 8px 30px rgba(0,0,0,.18);
+    max-width: 350px;
+    min-width: 260px;
+    padding: 15px 0;
+}
+/* Overlay Spinner Style */
+#bankid-qr-overlay {
+    position: fixed;
+    z-index: 999;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(10,20,30,0.55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.bankid-spinner {
+    border: 6px solid #f3f3f3;
+    border-top: 6px solid #003366;
+    border-radius: 50%;
+    width: 55px;
+    height: 55px;
+    animation: spin 1.1s linear infinite;
+    margin-bottom: 25px;
+    position: fixed;
+    left: 48%;
+    top: 35%;
+}
+@keyframes spin {
+    0% { transform: rotate(0deg);}
+    100% { transform: rotate(360deg);}
+}
+.bankid-qr-message {
+    color: #fff;
+    font-size: 19px;
+    background: rgba(0,0,0,0.18);
+    border-radius: 9px;
+    padding: 17px 26px;
+    text-align: center;
+    max-width: 370px;
+
+}
