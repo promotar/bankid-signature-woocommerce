@@ -1,8 +1,10 @@
 <?php
+// File: bankid-signature-woocommerce/admin/settings-page.php
+
 add_action('admin_menu', function () {
     add_menu_page('BankID Settings', 'BankID Settings', 'manage_options', 'bankid-settings', 'bankid_settings_page');
 });
- 
+  
 function bankid_settings_page() {
     if (isset($_POST['bankid_settings'])) {
         update_option('bankid_apiUser', sanitize_text_field($_POST['api_user']));
