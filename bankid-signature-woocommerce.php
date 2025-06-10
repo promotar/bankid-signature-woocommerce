@@ -16,16 +16,23 @@ if (!defined('ABSPATH')) exit;
 define('BANKID_SIGNATURE_PLUGIN_PATH', plugin_dir_path(__FILE__));
 require_once BANKID_SIGNATURE_PLUGIN_PATH . 'admin/settings-page.php';
 
-// Register the payment gateway
+// Register BankID as a payment gateway within WooCommerce
 add_filter('woocommerce_payment_gateways', function($methods) {
-    $methods[] = 'WC_Gateway_Bankid_Signature';
+    $methods[] = 'WC_Gateway_Bankid_Signature'; // add our custom gateway class
     return $methods;
 });
 
 add_action('plugins_loaded', function() {
     if (!class_exists('WC_Payment_Gateway')) return;
 
+    /**
+     * Payment gateway class responsible for handling the BankID signature flow
+     * on the checkout page.
+     */
     class WC_Gateway_Bankid_Signature extends WC_Payment_Gateway {
+        /**
+         * Setup gateway properties and hook required actions.
+         */
         public function __construct() {
             $this->id                 = 'bankid_signature';
             $this->method_title       = __('BankID Signature', 'bankid');
@@ -41,6 +48,9 @@ add_action('plugins_loaded', function() {
             add_action('woocommerce_receipt_' . $this->id, [$this, 'payment_page']);
             add_action('woocommerce_api_wc_gateway_' . $this->id, [$this, 'gateway_api']);
         }
+        /**
+         * Output the description and modal container on the checkout page.
+         */
         public function payment_fields() {
             if ($this->description) {
                 echo '<div class="bankid-description" style="margin-bottom:12px;color:#003366;background:#f9f9f9;padding:10px 16px;border-radius:5px;">'
@@ -50,7 +60,9 @@ add_action('plugins_loaded', function() {
             echo '<div id="bankid-signature-modal" style="display:none;"></div>';
         }
 
-        // Inject JS and CSS only in checkout/receipt page if using this gateway
+        /**
+         * Load scripts and styles required for the modal during checkout.
+         */
         public function enqueue_scripts() {
             if (is_checkout() || is_wc_endpoint_url('order-pay')) {
                 wp_enqueue_style('bankid-signature-style', plugin_dir_url(__FILE__).'assets/bankid-modal.css');
@@ -68,6 +80,10 @@ add_action('plugins_loaded', function() {
 
 
 
+        /**
+         * Standard WooCommerce payment handler that redirects back to the
+         * order payment page where the BankID process will start.
+         */
         public function process_payment($order_id) {
             $order = wc_get_order($order_id);
             return [
@@ -76,8 +92,11 @@ add_action('plugins_loaded', function() {
             ];
         }
 
-// Render the QR/app modal on the payment page (order-pay endpoint)
-public function payment_page($order_id) {
+    /**
+     * Output the modal container and automatically trigger the JS handler
+     * on the order payment page.
+     */
+    public function payment_page($order_id) {
     ?>
     <div id="bankid-signature-modal" style="display:none;"></div>
      <div id="bankid-qr-overlay">
@@ -91,7 +110,7 @@ public function payment_page($order_id) {
     </div>
     <script>
     jQuery(document).ready(function($){
-        // استدعي الدالة حتى لو أعاد المستخدم تحميل الصفحة
+        // Call the start function even if the user refreshed the page
         setTimeout(function(){
             if (typeof window.BankIDSignatureStart === "function") {
                 window.BankIDSignatureStart(<?php echo intval($order_id); ?>);
@@ -103,7 +122,10 @@ public function payment_page($order_id) {
 }
 
 
-        // AJAX endpoint for bankid signature/collect on the payment page
+        /**
+         * AJAX endpoint used by the JS script to start the signing process
+         * and poll for its completion.
+         */
         public function gateway_api() {
             if ($_SERVER['REQUEST_METHOD'] !== 'POST') wp_send_json_error(['msg' => 'Invalid request']);
 
@@ -111,6 +133,7 @@ public function payment_page($order_id) {
             $order = wc_get_order($order_id);
             if (!$order) wp_send_json_error(['msg' => 'Order not found']);
 
+            // Step 1: initiate the BankID signing session
             if (!empty($_POST['step']) && $_POST['step'] === 'start') {
                 $products = [];
                 foreach ($order->get_items() as $item) {
@@ -153,7 +176,7 @@ public function payment_page($order_id) {
                 }
             }
 
-            // Collect step (polling for sign status)
+            // Step 2: collect the status of the signing session
             if (!empty($_POST['step']) && $_POST['step'] === 'collect') {
                 $orderRef = get_post_meta($order_id, '_bankid_orderref', true);
                 if (!$orderRef) wp_send_json_error(['msg' => 'Missing orderRef']);
@@ -196,7 +219,7 @@ public function payment_page($order_id) {
     }
 });
 
-// Show "Receive Product" in thank you + orders (optional)
+// Display a button on the thank you page for products that require signing
 add_action('woocommerce_thankyou', function($order_id){
     $order = wc_get_order($order_id);
     if (!$order) return;
@@ -238,10 +261,10 @@ add_action('woocommerce_thankyou', function($order_id){
         </script>
         <?php
     }
-}, 2); // priority 2 لعرضه أعلى الصفحة وقبل التفاصيل
+}, 2); // priority 2 so it appears before order details
 
 
-// Product settings in admin as before
+// Add product level settings for enabling BankID
 add_action('woocommerce_product_options_general_product_data', function() {
     woocommerce_wp_checkbox([
         'id' => '_bankid_enabled',
@@ -255,6 +278,7 @@ add_action('woocommerce_product_options_general_product_data', function() {
         'desc_tip' => true,
     ]);
 });
+// Ensure only relevant gateways are shown when a BankID product is in the cart
 add_filter('woocommerce_available_payment_gateways', function($gateways) {
     if (is_admin() || !is_checkout()) return $gateways;
 
@@ -270,7 +294,7 @@ add_filter('woocommerce_available_payment_gateways', function($gateways) {
         }
     }
 
-    // إذا يوجد منتج يحتاج BankID أظهرها فقط وأخفي الباقي
+    // Show only the BankID gateway if any item requires it
     if ($has_bankid) {
         foreach ($gateways as $gateway_id => $gateway) {
             if ($gateway_id !== 'bankid_signature') {
@@ -278,7 +302,7 @@ add_filter('woocommerce_available_payment_gateways', function($gateways) {
             }
         }
     } else {
-        // إذا لا يوجد منتج عليه توقيع BankID أخفيها
+        // Hide the gateway if no items need a signature
         if (isset($gateways['bankid_signature'])) {
             unset($gateways['bankid_signature']);
         }
@@ -286,11 +310,12 @@ add_filter('woocommerce_available_payment_gateways', function($gateways) {
     return $gateways;
 });
 
+// Prevent mixing BankID products with regular ones in the cart
 add_filter('woocommerce_add_to_cart_validation', function($passed, $product_id, $quantity) {
-    // هل المنتج الذي يضاف يحتاج توقيع؟
+    // Is the product being added signed with BankID?
     $is_bankid = get_post_meta($product_id, '_bankid_enabled', true) === 'yes';
 
-    // هل يوجد بالسلة منتج يحتاج توقيع؟
+    // Check if the cart already contains a BankID product
     $cart_has_bankid = false;
     foreach (WC()->cart->get_cart() as $item) {
         $pid = $item['product_id'];
@@ -300,20 +325,20 @@ add_filter('woocommerce_add_to_cart_validation', function($passed, $product_id, 
         }
     }
 
-    // منطق الحماية
-    // اذا المنتج عليه توقيع والسلة غير فارغة
+    // Validation rules
+    // 1) Product requires signing while cart is not empty
     if ($is_bankid && WC()->cart->get_cart_contents_count() > 0) {
         wc_add_notice(__('You cannot add this product with other products in the cart. Please empty your cart first.', 'bankid'), 'error');
         return false;
     }
 
-    // اذا السلة فيها منتج عليه توقيع وتحاول تضيف اي منتج آخر
+    // 2) Cart has a signature product and another product is added
     if (!$is_bankid && $cart_has_bankid) {
         wc_add_notice(__('You cannot add other products with a digital signature product. Please remove it from your cart first.', 'bankid'), 'error');
         return false;
     }
 
-    // اذا السلة فيها منتج ثاني وتحاول تضيف منتج عليه توقيع
+    // 3) Cart has other products and a signature product is being added
     if ($is_bankid && WC()->cart->get_cart_contents_count() > 0) {
         wc_add_notice(__('You cannot add this product with other products in the cart. Please empty your cart first.', 'bankid'), 'error');
         return false;
@@ -322,6 +347,7 @@ add_filter('woocommerce_add_to_cart_validation', function($passed, $product_id, 
     return $passed;
 }, 10, 3);
 
+// Save the custom product settings when a product is updated
 add_action('woocommerce_process_product_meta', function($post_id) {
     update_post_meta($post_id, '_bankid_enabled', isset($_POST['_bankid_enabled']) ? 'yes' : 'no');
     if (isset($_POST['_bankid_redirect_url'])) {
