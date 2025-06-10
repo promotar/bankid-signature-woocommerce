@@ -1,10 +1,15 @@
 <?php
 // File: bankid-signature-woocommerce/admin/settings-page.php
+// Provides an admin page for entering BankID API credentials.
 
+// Register a simple menu item under the WordPress dashboard
 add_action('admin_menu', function () {
     add_menu_page('BankID Settings', 'BankID Settings', 'manage_options', 'bankid-settings', 'bankid_settings_page');
 });
   
+/**
+ * Render the settings form and save submitted values.
+ */
 function bankid_settings_page() {
     if (isset($_POST['bankid_settings'])) {
         update_option('bankid_apiUser', sanitize_text_field($_POST['api_user']));
