@@ -211,31 +211,35 @@ add_action('woocommerce_thankyou', function($order_id){
         }
     }
 
-    if ($has_bankid && $redirect_url) {
-        ?>
-        <div id="bankid-receive-product-container" style="margin:30px 0 20px 0; text-align:center;">
-            <a id="bankid-receive-btn" href="<?php echo esc_url($redirect_url); ?>" target="_blank"
-                class="button"
-                style="background:#26af5c;color:#fff;padding:10px 40px;font-size:18px;border-radius:6px;border:none;display:inline-block;">
-                Receive Product
-            </a>
-            <div id="bankid-countdown" style="margin-top:10px;color:#003366;font-size:15px;font-weight:bold;">
-                You will be redirected in <span id="bankid-seconds">7</span> seconds...
-            </div>
+ if ($has_bankid && $redirect_url) {
+    ?>
+    <div id="bankid-receive-product-container" style="margin:30px 0 20px 0; text-align:center;">
+        <a id="bankid-receive-btn"
+           href="<?php echo esc_url($redirect_url); ?>"
+           data-href="<?php echo $redirect_url; ?>"
+           class="button"
+           style="background:#26af5c;color:#fff;padding:10px 40px;font-size:18px;border-radius:6px;border:none;display:inline-block;">
+            Receive Product
+        </a>
+        <div id="bankid-countdown" style="margin-top:10px;color:#003366;font-size:15px;font-weight:bold;">
+            You will be redirected in <span id="bankid-seconds">7</span> seconds...
         </div>
-        <script>
-        (function(){
-            var counter = 7;
-            var interval = setInterval(function(){
-                counter--;
-                document.getElementById('bankid-seconds').textContent = counter;
-                if(counter <= 0){
-                    clearInterval(interval);
-            window.open("<?php echo esc_url($redirect_url); ?>", "_blank");
-                }
-            }, 1000);
-        })();
-        </script>
+    </div>
+    <script>
+    (function(){
+        var counter = 3;
+        var interval = setInterval(function(){
+            counter--;
+            document.getElementById('bankid-seconds').textContent = counter;
+            if(counter <= 0){
+                clearInterval(interval);
+                var url = document.getElementById('bankid-receive-btn').getAttribute('data-href');
+                // بدون أي معالجة زيادة
+                window.location.href = url;
+            }
+        }, 1000);
+    })();
+    </script>
         <?php
     }
 }, 2); // priority 2 لعرضه أعلى الصفحة وقبل التفاصيل
